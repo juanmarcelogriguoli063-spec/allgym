@@ -4,19 +4,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CuotaBadge from "@/components/cuota-badge";
 import MarkPaidButton from "@/components/mark-paid-button";
+import SeguimientosSection from "@/components/seguimientos-section";
 import SocioDialog from "../socio-dialog";
 
 export default async function SocioDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: socio }, { data: planes }, { data: cuotas }] = await Promise.all([
+  const [{ data: socio }, { data: planes }, { data: cuotas }, { data: seguimientos }] = await Promise.all([
     supabase.from("socios").select("*, planes(nombre)").eq("id", id).single(),
     supabase.from("planes").select("id, nombre, precio").eq("activo", true).order("precio"),
     supabase.from("cuotas").select("*").eq("socio_id", id).order("fecha_vencimiento", { ascending: false }),
+    supabase
+      .from("seguimientos")
+      .select("id, nota, created_at, profiles(full_name, email)")
+      .eq("socio_id", id)
+      .order("created_at", { ascending: false }),
   ]);
 
   if (!socio) notFound();
+
+  const seguimientosRows = (seguimientos ?? []).map((s) => {
+    const autor = s.profiles as unknown as { full_name: string | null; email: string | null } | null;
+    return { id: s.id, nota: s.nota, created_at: s.created_at, autor: autor?.full_name ?? autor?.email ?? null };
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -89,6 +100,15 @@ export default async function SocioDetallePage({ params }: { params: Promise<{ i
               )}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Seguimiento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SeguimientosSection socioId={id} seguimientos={seguimientosRows} />
         </CardContent>
       </Card>
     </div>

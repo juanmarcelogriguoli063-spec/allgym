@@ -134,6 +134,24 @@ export async function crearMovimiento(formData: FormData): Promise<ActionResult>
   return { success: true };
 }
 
+export async function crearSeguimiento(socioId: string, nota: string): Promise<ActionResult> {
+  const supabase = await requireStaff();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!nota.trim()) return { error: "La nota no puede estar vacía" };
+
+  const { error } = await supabase.from("seguimientos").insert({
+    socio_id: socioId,
+    autor_id: user!.id,
+    nota: nota.trim(),
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/socios/${socioId}`);
+  return { success: true };
+}
+
 export type IngresoResultado = {
   nombre: string;
   estado: string;
