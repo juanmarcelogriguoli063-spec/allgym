@@ -8,7 +8,7 @@ export default function Diferencial() {
         <Reveal>
           <h2 className="text-center text-3xl font-bold">Por qué elegirnos</h2>
           <p className="mx-auto mt-3 max-w-lg text-center text-muted-foreground">
-            El software de gestión de gimnasios "grande" tiene un problema conocido:
+            El software de gestión de gimnasios &ldquo;grande&rdquo; tiene un problema conocido:
             contratos difíciles de cancelar, soporte que desaparece después de firmar,
             y precios que suben solos.
           </p>
