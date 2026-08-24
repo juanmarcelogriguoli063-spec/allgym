@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, CreditCard, Wallet, ScanLine } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, Wallet, ScanLine, Inbox } from "lucide-react";
 import LogoutButton from "@/components/logout-button";
 import GymLogo from "@/components/gym-logo";
 import { createClient } from "@/lib/supabase/server";
@@ -11,6 +11,7 @@ const NAV = [
   { href: "/admin/socios", label: "Socios", icon: Users },
   { href: "/admin/cuotas", label: "Cuotas", icon: CreditCard },
   { href: "/admin/finanzas", label: "Finanzas", icon: Wallet },
+  { href: "/admin/solicitudes", label: "Solicitudes", icon: Inbox },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
