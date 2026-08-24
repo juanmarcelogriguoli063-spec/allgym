@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,10 +9,16 @@ export default async function SocioHomePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // El layout padre (src/app/socio/layout.tsx) ya valida la sesión, pero
+  // Next.js puede renderizar layout y page en paralelo — no está
+  // garantizado que el redirect del layout se resuelva antes de que esta
+  // page corra, así que no asumimos que `user` no es null acá.
+  if (!user) redirect("/login?next=/socio");
+
   const { data: socio } = await supabase
     .from("socios")
     .select("nombre, planes(nombre), cuotas(id, estado, fecha_vencimiento, monto)")
-    .eq("profile_id", user!.id)
+    .eq("profile_id", user.id)
     .maybeSingle();
 
   if (!socio) {
