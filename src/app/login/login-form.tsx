@@ -24,36 +24,44 @@ export default function LoginForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const supabase = createClient();
 
-    const { error, data: session } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    try {
+      const supabase = createClient();
+      const { error, data: session } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      setError("Email o contraseña incorrectos");
-      return;
-    }
+      if (error) {
+        setError("Email o contraseña incorrectos");
+        return;
+      }
 
-    if (next) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+
+      const role = profile?.role;
+      const areaDest =
+        role === "dueno" || role === "recepcionista" ? "/admin" :
+        role === "socio" ? "/socio" :
+        null;
+
+      // Solo respetamos "next" si es una ruta a la que este rol tiene
+      // acceso. Si no, ignorarlo evita el loop de redirects: por ej. un
+      // socio que intentó entrar a /admin sin sesión queda con
+      // next=/admin; si lo mandáramos ahí igual, el layout de /admin lo
+      // rebota de nuevo a /login?next=/admin en cuanto valide el rol.
+      // (areaDest === null cuando el rol no tiene sección propia: en ese
+      // caso "next" tampoco se respeta, se manda siempre a "/".)
+      const dest = areaDest && next && next.startsWith(areaDest) ? next : (areaDest ?? "/");
+
       router.refresh();
-      router.push(next);
-      return;
+      router.push(dest);
+    } catch {
+      setError("No se pudo iniciar sesión. Probá de nuevo.");
+    } finally {
+      setLoading(false);
     }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", session.user.id)
-      .single();
-
-    const role = profile?.role;
-    const dest =
-      role === "dueno" || role === "recepcionista" ? "/admin" :
-      role === "socio" ? "/socio" :
-      "/";
-
-    router.refresh();
-    router.push(dest);
   }
 
   return (
