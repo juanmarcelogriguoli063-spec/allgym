@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CuotaBadge from "@/components/cuota-badge";
 import MarkPaidButton from "@/components/mark-paid-button";
+import WhatsappRecordatorioButton from "@/components/whatsapp-recordatorio-button";
 import SeguimientosSection from "@/components/seguimientos-section";
 import SocioDialog from "../socio-dialog";
 
@@ -87,7 +88,18 @@ export default async function SocioDetallePage({ params }: { params: Promise<{ i
                     <CuotaBadge estado={c.estado} fechaVencimiento={c.fecha_vencimiento} />
                   </TableCell>
                   <TableCell className="text-right">
-                    {c.estado !== "pagado" && <MarkPaidButton cuotaId={c.id} />}
+                    <div className="flex justify-end gap-2">
+                      {c.estado !== "pagado" && (
+                        <WhatsappRecordatorioButton
+                          telefono={socio.telefono}
+                          nombre={socio.nombre}
+                          estado={c.estado}
+                          fechaVencimiento={c.fecha_vencimiento}
+                          monto={Number(c.monto)}
+                        />
+                      )}
+                      {c.estado !== "pagado" && <MarkPaidButton cuotaId={c.id} />}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

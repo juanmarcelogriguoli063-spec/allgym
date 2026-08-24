@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CuotaBadge from "@/components/cuota-badge";
 import MarkPaidButton from "@/components/mark-paid-button";
+import WhatsappRecordatorioButton from "@/components/whatsapp-recordatorio-button";
 import { getCuotaAlertLevel } from "@/lib/cuotas";
 
 const ORDEN: Record<string, number> = { vencida: 0, por_vencer: 1, pendiente: 2, pagado: 3 };
@@ -63,7 +64,18 @@ export default async function CuotasPage() {
                       <CuotaBadge estado={c.estado} fechaVencimiento={c.fecha_vencimiento} />
                     </TableCell>
                     <TableCell className="text-right">
-                      {c.estado !== "pagado" && <MarkPaidButton cuotaId={c.id} />}
+                      <div className="flex justify-end gap-2">
+                        {c.estado !== "pagado" && c.nivel !== "pendiente" && (
+                          <WhatsappRecordatorioButton
+                            telefono={socio?.telefono ?? null}
+                            nombre={socio?.nombre ?? ""}
+                            estado={c.estado}
+                            fechaVencimiento={c.fecha_vencimiento}
+                            monto={Number(c.monto)}
+                          />
+                        )}
+                        {c.estado !== "pagado" && <MarkPaidButton cuotaId={c.id} />}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
