@@ -14,14 +14,12 @@ export default function CuotasDonutChart({ slices }: { slices: Slice[] }) {
   const c = 2 * Math.PI * r;
   const center = size / 2;
 
-  let offset = 0;
+  const gapLen = total > 0 ? 2 : 0;
+  const lens = slices.map((s) => (total > 0 ? s.value / total : 0) * c);
   const arcs = slices.map((s, i) => {
-    const frac = total > 0 ? s.value / total : 0;
-    const len = frac * c;
-    const gapLen = total > 0 ? 2 : 0;
-    const arc = { ...s, dasharray: `${Math.max(0, len - gapLen)} ${c - Math.max(0, len - gapLen)}`, dashoffset: -offset, index: i };
-    offset += len;
-    return arc;
+    const len = lens[i];
+    const offset = lens.slice(0, i).reduce((a, b) => a + b, 0);
+    return { ...s, dasharray: `${Math.max(0, len - gapLen)} ${c - Math.max(0, len - gapLen)}`, dashoffset: -offset, index: i };
   });
 
   if (total === 0) {

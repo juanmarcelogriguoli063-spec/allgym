@@ -38,19 +38,28 @@ export default function SocioDialog({ planes, socio }: { planes: Plan[]; socio?:
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
-    const result = isEdit
-      ? await actualizarSocio(socio!.id, formData)
-      : await crearSocio(formData);
-    setLoading(false);
+    try {
+      const result = isEdit
+        ? await actualizarSocio(socio!.id, formData)
+        : await crearSocio(formData);
 
-    if ("error" in result) {
-      toast.error(result.error);
-      return;
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+
+      if (result.warning) {
+        toast.warning(result.warning);
+      } else {
+        toast.success(isEdit ? "Socio actualizado" : "Socio creado");
+      }
+      setOpen(false);
+      router.refresh();
+    } catch {
+      toast.error("No se pudo guardar. Probá de nuevo.");
+    } finally {
+      setLoading(false);
     }
-
-    toast.success(isEdit ? "Socio actualizado" : "Socio creado");
-    setOpen(false);
-    router.refresh();
   }
 
   return (

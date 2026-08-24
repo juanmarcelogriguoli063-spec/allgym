@@ -1,10 +1,12 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { CheckCircle2, XCircle, Clock, Search } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import MarkPaidButton from "@/components/mark-paid-button";
 import { buscarSocioPorDni, type IngresoResultado } from "@/lib/actions/socios";
@@ -18,6 +20,7 @@ const NIVEL_UI = {
 };
 
 export default function IngresoPage() {
+  const dniId = useId();
   const [dni, setDni] = useState("");
   const [resultado, setResultado] = useState<IngresoResultado | null>(null);
   const [pending, startTransition] = useTransition();
@@ -26,13 +29,29 @@ export default function IngresoPage() {
 
   function buscar(e: React.FormEvent) {
     e.preventDefault();
-    if (!dni.trim()) return;
+    if (!dni.trim() || pending) return;
+    const buscado = dni;
     startTransition(async () => {
-      const r = await buscarSocioPorDni(dni);
-      setResultado(r);
-      setLastDni(dni);
-      setDni("");
-      inputRef.current?.focus();
+      try {
+        const r = await buscarSocioPorDni(buscado);
+        setResultado(r);
+        setLastDni(buscado);
+      } catch {
+        toast.error("No se pudo buscar el DNI. Probá de nuevo.");
+      } finally {
+        // Solo limpiamos el input si el operador no escribió ya el
+        // próximo DNI mientras esta búsqueda estaba en vuelo — si no,
+        // se le borraba lo que estaba tipeando.
+        setDni((current) => (current === buscado ? "" : current));
+        inputRef.current?.focus();
+      }
+    });
+  }
+
+  function handleCuotaPagada() {
+    setResultado((prev) => {
+      if (!prev || "error" in prev) return prev;
+      return { ...prev, nivel: "pagado", cuotaId: null, diasRestantes: null };
     });
   }
 
@@ -44,7 +63,11 @@ export default function IngresoPage() {
       </div>
 
       <form onSubmit={buscar} className="flex gap-2">
+        <Label htmlFor={dniId} className="sr-only">
+          DNI
+        </Label>
         <Input
+          id={dniId}
           ref={inputRef}
           autoFocus
           inputMode="numeric"
@@ -93,7 +116,7 @@ export default function IngresoPage() {
                       )}
                       {resultado.nivel !== "pagado" && resultado.cuotaId && (
                         <div className="mt-2">
-                          <MarkPaidButton cuotaId={resultado.cuotaId} />
+                          <MarkPaidButton cuotaId={resultado.cuotaId} onSuccess={handleCuotaPagada} />
                         </div>
                       )}
                     </CardContent>

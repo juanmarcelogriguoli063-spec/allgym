@@ -26,16 +26,21 @@ export default function MovimientoDialog() {
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
-    const result = await crearMovimiento(formData);
-    setLoading(false);
+    try {
+      const result = await crearMovimiento(formData);
 
-    if ("error" in result) {
-      toast.error(result.error);
-      return;
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Movimiento registrado");
+      setOpen(false);
+      router.refresh();
+    } catch {
+      toast.error("No se pudo guardar. Probá de nuevo.");
+    } finally {
+      setLoading(false);
     }
-    toast.success("Movimiento registrado");
-    setOpen(false);
-    router.refresh();
   }
 
   return (
