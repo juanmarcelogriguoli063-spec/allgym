@@ -1,8 +1,12 @@
+import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCuotaAlertLevel } from "@/lib/cuotas";
 import IngresosEgresosChart from "@/components/charts/ingresos-egresos-chart";
 import CuotasDonutChart from "@/components/charts/cuotas-donut-chart";
+
+const DIAS_RIESGO = 7;
 
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
@@ -15,7 +19,7 @@ export default async function AdminHomePage() {
 
   const [{ data: movimientos }, { data: socios }] = await Promise.all([
     supabase.from("finanzas_movimientos").select("tipo, monto, fecha").gte("fecha", desdeStr),
-    supabase.from("socios").select("id, estado, cuotas(estado, fecha_vencimiento)"),
+    supabase.from("socios").select("id, nombre, telefono, estado, cuotas(estado, fecha_vencimiento)"),
   ]);
 
   // --- Ingresos/egresos por mes (ultimos 6 meses) ---
@@ -41,16 +45,26 @@ export default async function AdminHomePage() {
   const totalIngresosMes = chartData[chartData.length - 1]?.ingreso ?? 0;
   const totalEgresosMes = chartData[chartData.length - 1]?.egreso ?? 0;
 
-  // --- Distribucion de socios por estado de cuota ---
+  // --- Distribucion de socios por estado de cuota + socios en riesgo ---
   const nivelCount: Record<string, number> = { pagado: 0, por_vencer: 0, vencida: 0, pendiente: 0 };
   let activos = 0;
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const enRiesgo: { id: string; nombre: string; diasVencida: number }[] = [];
+
   for (const s of socios ?? []) {
     if (s.estado === "activo") activos++;
     const cuotas = (s.cuotas ?? []) as { estado: string; fecha_vencimiento: string | null }[];
     const ultima = [...cuotas].sort((a, b) => (b.fecha_vencimiento ?? "").localeCompare(a.fecha_vencimiento ?? ""))[0];
     const nivel = getCuotaAlertLevel(ultima?.estado ?? "pendiente", ultima?.fecha_vencimiento ?? null);
     nivelCount[nivel]++;
+
+    if (s.estado === "activo" && nivel === "vencida" && ultima?.fecha_vencimiento) {
+      const diasVencida = Math.floor((hoy.getTime() - new Date(ultima.fecha_vencimiento).getTime()) / 86400000);
+      if (diasVencida >= DIAS_RIESGO) enRiesgo.push({ id: s.id, nombre: s.nombre, diasVencida });
+    }
   }
+  enRiesgo.sort((a, b) => b.diasVencida - a.diasVencida);
 
   const donutSlices = [
     { key: "pagado", label: "Al día", value: nivelCount.pagado, color: "#0ca30c" },
@@ -114,6 +128,32 @@ export default async function AdminHomePage() {
           </CardContent>
         </Card>
       </div>
+
+      {enRiesgo.length > 0 && (
+        <Card className="border-destructive/30">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="size-4 text-destructive" />
+              Socios en riesgo de baja ({enRiesgo.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-3 text-sm text-muted-foreground">
+              Cuota vencida hace más de {DIAS_RIESGO} días — probablemente dejaron de venir.
+            </p>
+            <ul className="flex flex-col divide-y divide-border">
+              {enRiesgo.slice(0, 8).map((s) => (
+                <li key={s.id} className="flex items-center justify-between py-2 text-sm">
+                  <Link href={`/admin/socios/${s.id}`} className="font-medium hover:text-primary hover:underline">
+                    {s.nombre}
+                  </Link>
+                  <span className="text-muted-foreground">vencida hace {s.diasVencida} días</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
