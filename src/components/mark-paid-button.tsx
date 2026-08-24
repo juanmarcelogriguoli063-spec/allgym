@@ -7,21 +7,28 @@ import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { marcarCuotaPagada } from "@/lib/actions/socios";
 
-export default function MarkPaidButton({ cuotaId }: { cuotaId: string }) {
+export default function MarkPaidButton({ cuotaId, onSuccess }: { cuotaId: string; onSuccess?: () => void }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
+    if (loading) return;
     setLoading(true);
-    const result = await marcarCuotaPagada(cuotaId);
-    setLoading(false);
+    try {
+      const result = await marcarCuotaPagada(cuotaId);
 
-    if ("error" in result) {
-      toast.error(result.error);
-      return;
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Cuota marcada como pagada — se generó la próxima");
+      onSuccess?.();
+      router.refresh();
+    } catch {
+      toast.error("No se pudo marcar la cuota. Probá de nuevo.");
+    } finally {
+      setLoading(false);
     }
-    toast.success("Cuota marcada como pagada — se generó la próxima");
-    router.refresh();
   }
 
   return (
