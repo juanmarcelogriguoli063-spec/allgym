@@ -43,3 +43,6 @@ next-env.d.ts
 
 # supabase CLI local cache (project ref, pooler url, etc. — no subir)
 /supabase/.temp/
+
+.vercel
+.env*
