@@ -31,7 +31,16 @@ hacer primero.
 - [ ] **Medición de progreso físico** — tabla `mediciones` (peso, medidas,
   fecha, foto opcional en Supabase Storage privado) + gráfico de evolución.
 - [ ] Reserva de clases grupales con cupo + lista de espera.
-- [ ] Rutinas de entrenamiento asignadas por el profe (tipo TrueCoach).
+- [ ] Rutinas de entrenamiento asignadas por el profe (tipo TrueCoach). Si se
+  hace, ahí sí tendría sentido evaluar una API de transcripción de video
+  (ej. Supadata) para sacar descripción automática de un link de YouTube.
+
+## Plataforma (multi-tenant / cobro)
+
+- [ ] **Pago mensual de All Gym vía Mercado Pago** — pausado: falta definir
+  precio y cuenta de Mercado Pago de la empresa (no la del gimnasio).
+- [ ] Multi-tenant real (`gym_id` en cada tabla) cuando haya un segundo
+  gimnasio cliente — ver detalle en `COMERCIALIZACION.md`.
 
 ## Estética
 

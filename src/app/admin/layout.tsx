@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, CreditCard, Wallet, ScanLine, Inbox, Clock, UsersRound } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, Wallet, ScanLine, Inbox, Clock, UsersRound, Building2 } from "lucide-react";
 import LogoutButton from "@/components/logout-button";
 import GymLogo from "@/components/gym-logo";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,9 @@ const GESTION = [
   { href: "/admin/equipo", label: "Equipo", icon: UsersRound },
 ];
 
-const ROL_LABEL: Record<string, string> = { dueno: "Dueño", recepcionista: "Recepción" };
+const PLATAFORMA = [{ href: "/admin/plataforma", label: "Leads comerciales", icon: Building2 }];
+
+const ROL_LABEL: Record<string, string> = { dueno: "Dueño", recepcionista: "Recepción", super_admin: "Dueño de All Gym" };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -28,14 +30,20 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!user) redirect("/login?next=/admin");
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (!profile || (profile.role !== "dueno" && profile.role !== "recepcionista")) {
+  if (!profile || !["dueno", "recepcionista", "super_admin"].includes(profile.role)) {
     redirect("/login?next=/admin");
   }
-  const esDueno = profile.role === "dueno";
+  const esGestion = profile.role === "dueno" || profile.role === "super_admin";
+  const esSuperAdmin = profile.role === "super_admin";
 
-  const { count: solicitudesPendientes } = esDueno
-    ? await supabase.from("solicitudes").select("id", { count: "exact", head: true }).eq("estado", "pendiente")
-    : { count: 0 };
+  const [{ count: solicitudesPendientes }, { count: leadsNuevos }] = await Promise.all([
+    esGestion
+      ? supabase.from("solicitudes").select("id", { count: "exact", head: true }).eq("estado", "pendiente")
+      : Promise.resolve({ count: 0 }),
+    esSuperAdmin
+      ? supabase.from("leads_comerciales").select("id", { count: "exact", head: true }).eq("estado", "nuevo")
+      : Promise.resolve({ count: 0 }),
+  ]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -58,13 +66,24 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               ))}
             </div>
 
-            {esDueno && (
+            {esGestion && (
               <div className="flex flex-col gap-1">
                 <p className="px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-                  Gestión
+                  Gestión — Griguoli Gym
                 </p>
                 {GESTION.map((item) => (
                   <NavLink key={item.href} {...item} badge={item.href === "/admin/solicitudes" ? solicitudesPendientes : undefined} />
+                ))}
+              </div>
+            )}
+
+            {esSuperAdmin && (
+              <div className="flex flex-col gap-1">
+                <p className="px-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
+                  Plataforma All Gym
+                </p>
+                {PLATAFORMA.map((item) => (
+                  <NavLink key={item.href} {...item} badge={leadsNuevos} />
                 ))}
               </div>
             )}

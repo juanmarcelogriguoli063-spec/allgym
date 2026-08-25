@@ -32,7 +32,7 @@ async function requireDueno() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No autenticado");
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (!profile || profile.role !== "dueno") {
+  if (!profile || (profile.role !== "dueno" && profile.role !== "super_admin")) {
     throw new Error("Esta acción es solo para el dueño");
   }
   return supabase;

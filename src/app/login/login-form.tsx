@@ -42,7 +42,7 @@ export default function LoginForm() {
 
       const role = profile?.role;
       const areaDest =
-        role === "dueno" ? "/admin" :
+        role === "dueno" || role === "super_admin" ? "/admin" :
         role === "recepcionista" ? "/admin/ingreso" :
         role === "socio" ? "/socio" :
         null;
