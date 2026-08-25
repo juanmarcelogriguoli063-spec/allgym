@@ -1,16 +1,16 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CuotaBadge from "@/components/cuota-badge";
 import MarkPaidButton from "@/components/mark-paid-button";
 import WhatsappRecordatorioButton from "@/components/whatsapp-recordatorio-button";
 import { getCuotaAlertLevel } from "@/lib/cuotas";
+import { requireDuenoPage } from "@/lib/require-dueno";
 
 const ORDEN: Record<string, number> = { vencida: 0, por_vencer: 1, pendiente: 2, pagado: 3 };
 
 export default async function CuotasPage() {
-  const supabase = await createClient();
+  const { supabase } = await requireDuenoPage();
 
   const { data: cuotas } = await supabase
     .from("cuotas")
@@ -24,7 +24,7 @@ export default async function CuotasPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Cuotas</h1>
+        <h1 className="text-2xl font-bold text-foreground">Vencimientos</h1>
         <p className="text-sm text-muted-foreground">Vencidas y por vencer primero.</p>
       </div>
 

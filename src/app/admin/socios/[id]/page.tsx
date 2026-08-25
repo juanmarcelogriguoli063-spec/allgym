@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CuotaBadge from "@/components/cuota-badge";
@@ -7,10 +6,11 @@ import MarkPaidButton from "@/components/mark-paid-button";
 import WhatsappRecordatorioButton from "@/components/whatsapp-recordatorio-button";
 import SeguimientosSection from "@/components/seguimientos-section";
 import SocioDialog from "../socio-dialog";
+import { requireDuenoPage } from "@/lib/require-dueno";
 
 export default async function SocioDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createClient();
+  const { supabase } = await requireDuenoPage();
 
   const [{ data: socio }, { data: planes }, { data: cuotas }, { data: seguimientos }] = await Promise.all([
     supabase.from("socios").select("*, planes(nombre)").eq("id", id).single(),

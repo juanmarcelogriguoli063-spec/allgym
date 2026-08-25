@@ -16,11 +16,27 @@ async function requireStaff() {
   return { supabase, user };
 }
 
+// Gestión de socios/cuotas/finanzas/seguimientos: solo el dueño. El
+// recepcionista queda limitado al control de acceso (buscarSocioPorDni /
+// marcarCuotaPagada, más abajo), que corre por función RPC en vez de tocar
+// las tablas directo — así RLS bloquea de verdad, no solo la UI.
+async function requireDueno() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("No autenticado");
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  if (!profile || profile.role !== "dueno") {
+    throw new Error("Esta acción es solo para el dueño");
+  }
+  return { supabase, user };
+}
+
 type ActionResult = { success: true; warning?: string } | { error: string };
 
 export async function crearSocio(formData: FormData): Promise<ActionResult> {
   try {
-    const { supabase } = await requireStaff();
+    const { supabase } = await requireDueno();
 
     const nombre = String(formData.get("nombre") ?? "").trim();
     const telefono = String(formData.get("telefono") ?? "").trim() || null;
@@ -75,7 +91,7 @@ export async function crearSocio(formData: FormData): Promise<ActionResult> {
 
 export async function actualizarSocio(id: string, formData: FormData): Promise<ActionResult> {
   try {
-    const { supabase } = await requireStaff();
+    const { supabase } = await requireDueno();
 
     const nombre = String(formData.get("nombre") ?? "").trim();
     const telefono = String(formData.get("telefono") ?? "").trim() || null;
@@ -105,30 +121,9 @@ export async function actualizarSocio(id: string, formData: FormData): Promise<A
   }
 }
 
-export async function marcarCuotaPagada(cuotaId: string): Promise<ActionResult> {
-  try {
-    const { supabase } = await requireStaff();
-
-    const { error } = await supabase
-      .from("cuotas")
-      .update({ estado: "pagado", fecha_pago: new Date().toISOString().slice(0, 10) })
-      .eq("id", cuotaId);
-
-    if (error) return { error: error.message };
-
-    revalidatePath("/admin/cuotas");
-    revalidatePath("/admin/socios");
-    revalidatePath("/admin");
-    revalidatePath("/admin/ingreso");
-    return { success: true };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Error inesperado" };
-  }
-}
-
 export async function crearMovimiento(formData: FormData): Promise<ActionResult> {
   try {
-    const { supabase } = await requireStaff();
+    const { supabase } = await requireDueno();
 
     const tipo = String(formData.get("tipo") ?? "ingreso");
     const categoria = String(formData.get("categoria") ?? "").trim() || null;
@@ -160,7 +155,7 @@ export async function crearMovimiento(formData: FormData): Promise<ActionResult>
 
 export async function crearSeguimiento(socioId: string, nota: string): Promise<ActionResult> {
   try {
-    const { supabase, user } = await requireStaff();
+    const { supabase, user } = await requireDueno();
 
     if (!nota.trim()) return { error: "La nota no puede estar vacía" };
 
@@ -173,6 +168,27 @@ export async function crearSeguimiento(socioId: string, nota: string): Promise<A
     if (error) return { error: error.message };
 
     revalidatePath(`/admin/socios/${socioId}`);
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Error inesperado" };
+  }
+}
+
+export async function marcarCuotaPagada(cuotaId: string): Promise<ActionResult> {
+  try {
+    const { supabase } = await requireStaff();
+
+    // RPC en vez de update directo: asi el recepcionista puede cobrar en el
+    // control de acceso sin necesitar acceso de lectura/escritura general
+    // sobre la tabla cuotas (ver migracion 0008).
+    const { error } = await supabase.rpc("marcar_cuota_pagada_staff", { p_cuota_id: cuotaId });
+
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin/cuotas");
+    revalidatePath("/admin/socios");
+    revalidatePath("/admin");
+    revalidatePath("/admin/ingreso");
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Error inesperado" };
@@ -194,38 +210,38 @@ export async function buscarSocioPorDni(dni: string): Promise<IngresoResultado> 
 
     const { supabase } = await requireStaff();
 
-    const { data: socio, error } = await supabase
-      .from("socios")
-      .select("id, nombre, estado")
-      .eq("dni", dni.trim())
+    // RPC en vez de select directo sobre "socios": el recepcionista puede
+    // buscar y ver SOLO nombre + estado de cuota de la persona que tiene
+    // adelante, nunca la lista completa de socios (ver migracion 0008).
+    type RpcRow = {
+      socio_id: string;
+      nombre: string;
+      estado_socio: string;
+      cuota_id: string | null;
+      cuota_estado: string | null;
+      cuota_fecha_vencimiento: string | null;
+    };
+    const { data, error } = await supabase
+      .rpc("buscar_socio_por_dni", { p_dni: dni })
+      .returns<RpcRow[]>()
       .maybeSingle();
 
     if (error) return { error: error.message };
-    if (!socio) return { error: "No se encontró ningún socio con ese DNI" };
+    if (!data) return { error: "No se encontró ningún socio con ese DNI" };
 
-    const { data: cuota, error: cuotaError } = await supabase
-      .from("cuotas")
-      .select("id, estado, fecha_vencimiento")
-      .eq("socio_id", socio.id)
-      .order("fecha_vencimiento", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (cuotaError) return { error: cuotaError.message };
-
-    const nivel = getCuotaAlertLevel(cuota?.estado ?? "pendiente", cuota?.fecha_vencimiento ?? null);
+    const nivel = getCuotaAlertLevel(data.cuota_estado ?? "pendiente", data.cuota_fecha_vencimiento ?? null);
     let diasRestantes: number | null = null;
-    if (cuota?.fecha_vencimiento) {
+    if (data.cuota_fecha_vencimiento) {
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
-      diasRestantes = Math.ceil((new Date(cuota.fecha_vencimiento).getTime() - hoy.getTime()) / 86400000);
+      diasRestantes = Math.ceil((new Date(data.cuota_fecha_vencimiento).getTime() - hoy.getTime()) / 86400000);
     }
 
     return {
-      nombre: socio.nombre,
-      estado: socio.estado,
-      cuotaId: cuota?.id ?? null,
-      fechaVencimiento: cuota?.fecha_vencimiento ?? null,
+      nombre: data.nombre,
+      estado: data.estado_socio,
+      cuotaId: data.cuota_id,
+      fechaVencimiento: data.cuota_fecha_vencimiento,
       nivel,
       diasRestantes,
     };

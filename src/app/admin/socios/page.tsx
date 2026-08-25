@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CuotaBadge from "@/components/cuota-badge";
 import SocioDialog from "./socio-dialog";
+import { requireDuenoPage } from "@/lib/require-dueno";
 
 export default async function SociosPage() {
-  const supabase = await createClient();
+  const { supabase } = await requireDuenoPage();
 
   const [{ data: socios }, { data: planes }] = await Promise.all([
     supabase

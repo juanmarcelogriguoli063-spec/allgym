@@ -27,19 +27,19 @@ export async function crearSolicitud(formData: FormData): Promise<ActionResult> 
   return { success: true };
 }
 
-async function requireStaff() {
+async function requireDueno() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No autenticado");
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (!profile || (profile.role !== "dueno" && profile.role !== "recepcionista")) {
-    throw new Error("No autorizado");
+  if (!profile || profile.role !== "dueno") {
+    throw new Error("Esta acción es solo para el dueño");
   }
   return supabase;
 }
 
 export async function descartarSolicitud(id: string): Promise<ActionResult> {
-  const supabase = await requireStaff();
+  const supabase = await requireDueno();
   const { error } = await supabase.from("solicitudes").update({ estado: "descartada" }).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/admin/solicitudes");
@@ -47,7 +47,7 @@ export async function descartarSolicitud(id: string): Promise<ActionResult> {
 }
 
 export async function convertirSolicitudEnSocio(id: string): Promise<ActionResult> {
-  const supabase = await requireStaff();
+  const supabase = await requireDueno();
 
   const { data: sol } = await supabase.from("solicitudes").select("*").eq("id", id).single();
   if (!sol) return { error: "Solicitud no encontrada" };

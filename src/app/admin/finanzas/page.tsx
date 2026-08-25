@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import MovimientoDialog from "./movimiento-dialog";
+import { requireDuenoPage } from "@/lib/require-dueno";
 
 export default async function FinanzasPage() {
-  const supabase = await createClient();
+  const { supabase } = await requireDuenoPage();
 
   const { data: movimientos } = await supabase
     .from("finanzas_movimientos")

@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import SolicitudActions from "./solicitud-actions";
+import { requireDuenoPage } from "@/lib/require-dueno";
 
 export default async function SolicitudesPage() {
-  const supabase = await createClient();
+  const { supabase } = await requireDuenoPage();
   const { data: solicitudes } = await supabase
     .from("solicitudes")
     .select("*")

@@ -1,17 +1,18 @@
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCuotaAlertLevel } from "@/lib/cuotas";
+import { requireDuenoPage } from "@/lib/require-dueno";
 import IngresosEgresosChart from "@/components/charts/ingresos-egresos-chart";
 import CuotasDonutChart from "@/components/charts/cuotas-donut-chart";
 
 const DIAS_RIESGO = 7;
 
-const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const MESES_CORTO = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
 export default async function AdminHomePage() {
-  const supabase = await createClient();
+  const { supabase } = await requireDuenoPage();
 
   const desde = new Date();
   desde.setMonth(desde.getMonth() - 5, 1);
@@ -39,11 +40,17 @@ export default async function AdminHomePage() {
   }
   const chartData = Array.from(buckets.entries()).map(([key, v]) => {
     const [, mes] = key.split("-");
-    return { mes: key, label: MESES[Number(mes) - 1], ...v };
+    return { mes: key, label: MESES_CORTO[Number(mes) - 1], ...v };
   });
 
-  const totalIngresosMes = chartData[chartData.length - 1]?.ingreso ?? 0;
-  const totalEgresosMes = chartData[chartData.length - 1]?.egreso ?? 0;
+  const actual = chartData[chartData.length - 1];
+  const anterior = chartData[chartData.length - 2];
+  const balanceActual = (actual?.ingreso ?? 0) - (actual?.egreso ?? 0);
+  const balanceAnterior = anterior ? anterior.ingreso - anterior.egreso : null;
+  const deltaPct =
+    balanceAnterior && balanceAnterior !== 0 ? Math.round(((balanceActual - balanceAnterior) / Math.abs(balanceAnterior)) * 100) : null;
+
+  const nombreMesActual = MESES[new Date().getMonth()];
 
   // --- Distribucion de socios por estado de cuota + socios en riesgo ---
   const nivelCount: Record<string, number> = { pagado: 0, por_vencer: 0, vencida: 0, pendiente: 0 };
@@ -79,32 +86,51 @@ export default async function AdminHomePage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Resumen</h1>
-        <p className="text-sm text-muted-foreground">Griguoli Gym — este mes</p>
+        <p className="text-sm text-muted-foreground">Griguoli Gym</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Numero protagonista: el balance es el resultado que de verdad
+          le importa al dueño de un vistazo. El resto son cifras de apoyo. */}
+      <Card className="border-primary/25">
+        <CardContent className="flex flex-col gap-1 pt-6">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Balance de {nombreMesActual}
+          </p>
+          <div className="flex items-baseline gap-3">
+            <p className="text-5xl font-bold text-primary">{fmt(balanceActual)}</p>
+            {deltaPct !== null && (
+              <span
+                className={
+                  deltaPct >= 0
+                    ? "flex items-center gap-1 text-sm font-medium text-emerald-400"
+                    : "flex items-center gap-1 text-sm font-medium text-destructive"
+                }
+              >
+                {deltaPct >= 0 ? <TrendingUp className="size-4" /> : <TrendingDown className="size-4" />}
+                {Math.abs(deltaPct)}% vs. mes anterior
+              </span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 sm:grid-cols-3">
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-5">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Ingresos del mes</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">{fmt(totalIngresosMes)}</p>
+            <p className="mt-1 text-xl font-semibold text-foreground">{fmt(actual?.ingreso ?? 0)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-5">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Egresos del mes</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">{fmt(totalEgresosMes)}</p>
+            <p className="mt-1 text-xl font-semibold text-foreground">{fmt(actual?.egreso ?? 0)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-6">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Balance del mes</p>
-            <p className="mt-1 text-2xl font-bold text-primary">{fmt(totalIngresosMes - totalEgresosMes)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
+          <CardContent className="pt-5">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Socios activos</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">{activos}</p>
+            <p className="mt-1 text-xl font-semibold text-foreground">{activos}</p>
           </CardContent>
         </Card>
       </div>
