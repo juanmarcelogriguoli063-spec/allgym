@@ -20,8 +20,9 @@ export default function Hero() {
         </Reveal>
         <Reveal delay={0.2}>
           <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-            Cuotas, finanzas, control de acceso y recordatorios de WhatsApp — todo en un
-            solo panel, hecho a medida para gimnasios como el tuyo. Sin contrato atado.
+            Gestioná socios, cuotas y finanzas desde un solo panel, y dejá que un bot de
+            WhatsApp conectado a tu propio número les recuerde a tus socios que paguen
+            antes de que venza. Tu dashboard, tu marca, sin contrato atado.
           </p>
         </Reveal>
         <Reveal delay={0.3}>

@@ -3,19 +3,14 @@
 
 export const BENEFICIOS = [
   {
+    titulo: "Un bot de WhatsApp que cobra por vos",
+    descripcion:
+      "Conectás tu propio WhatsApp escaneando un QR (como WhatsApp Web) y el bot les avisa solo a tus socios antes de que venza la cuota. Vos configurás el mensaje, él lo manda.",
+  },
+  {
     titulo: "Sabé cuánto factura tu gimnasio sin abrir una planilla",
     descripcion:
       "Dashboard financiero en tiempo real: ingresos, egresos y balance del mes de un vistazo, sin armar un Excel a mano cada semana.",
-  },
-  {
-    titulo: "Dejá de perseguir socios para que paguen",
-    descripcion:
-      "El sistema arma el recordatorio de WhatsApp personalizado antes de que venza la cuota. Un clic y listo — no más planillas de \"quién debe\".",
-  },
-  {
-    titulo: "Sabé quién puede entrar, sin depender de la memoria de nadie",
-    descripcion:
-      "Control de acceso por DNI: tipeás o escaneás, y el sistema te dice al instante si esa persona está al día o no.",
   },
   {
     titulo: "Todo tu gimnasio en un solo lugar",
@@ -23,14 +18,19 @@ export const BENEFICIOS = [
       "Socios, cuotas, finanzas y seguimientos — no más datos repartidos entre un cuaderno, un grupo de WhatsApp y la memoria del recepcionista.",
   },
   {
-    titulo: "Tu gimnasio se ve profesional desde el primer clic",
-    descripcion:
-      "Página web propia con tu marca, tus planes y un formulario de contacto que te manda los interesados directo al panel.",
-  },
-  {
     titulo: "Detectá quién está por darse de baja antes de que pase",
     descripcion:
       "Alerta automática de socios con cuota vencida hace varios días — la señal más temprana de que alguien dejó de venir.",
+  },
+  {
+    titulo: "Tu propio dashboard, separado de cualquier otro gimnasio",
+    descripcion:
+      "Tu cuenta, tus datos, tu marca. Nada se mezcla con otros gimnasios que usen All Gym.",
+  },
+  {
+    titulo: "Tu gimnasio se ve profesional desde el primer clic",
+    descripcion:
+      "Página web propia con tu marca, tus planes y un formulario de contacto que te manda los interesados directo al panel.",
   },
 ];
 
@@ -61,26 +61,21 @@ export const DIFERENCIALES = [
   },
 ];
 
-export const PLANES = [
-  {
-    nombre: "Básico",
-    para: "Gimnasios chicos, hasta 150 socios",
-    features: ["Gestión de socios y cuotas", "Dashboard financiero", "Control de acceso por DNI", "Recordatorios de WhatsApp"],
-    destacado: false,
-  },
-  {
-    nombre: "Profesional",
-    para: "Gimnasios en crecimiento",
-    features: ["Todo lo del plan Básico", "Página web propia con tu marca", "Seguimientos y CRM de socios", "Soporte prioritario"],
-    destacado: true,
-  },
-  {
-    nombre: "Empresa",
-    para: "Cadenas y multi-sede",
-    features: ["Todo lo del plan Profesional", "Múltiples sedes", "Reportes avanzados", "Onboarding asistido"],
-    destacado: false,
-  },
-];
+// Un solo plan, todo incluido — sin escalones. El precio se confirma en la
+// charla inicial (todavía no está fijado).
+export const PLAN = {
+  nombre: "All Gym",
+  para: "Un plan único, para cualquier gimnasio",
+  features: [
+    "Gestión de socios, cuotas y finanzas",
+    "Bot de WhatsApp conectado a tu propio número (QR)",
+    "Tu dashboard, separado de cualquier otro gimnasio",
+    "Página web propia con tu marca",
+    "Control de acceso por DNI",
+    "Seguimientos y alertas de socios en riesgo",
+    "Soporte directo",
+  ],
+};
 
 export const FAQ = [
   {
@@ -100,7 +95,17 @@ export const FAQ = [
   {
     pregunta: "¿Qué incluye el servicio?",
     respuesta:
-      "Gestión de socios, cuotas y finanzas, control de acceso, recordatorios de WhatsApp, y tu propia página web — según el plan que elijas.",
+      "Todo en un solo plan: gestión de socios, cuotas y finanzas, bot de WhatsApp con tu propio número, control de acceso y tu propia página web.",
+  },
+  {
+    pregunta: "¿Mis datos se mezclan con los de otros gimnasios que usen All Gym?",
+    respuesta:
+      "No. Cada gimnasio tiene su propio dashboard y su propia base de datos separada — nadie más ve tus socios, tus cuotas ni tu WhatsApp.",
+  },
+  {
+    pregunta: "¿Cómo conecto mi WhatsApp?",
+    respuesta:
+      "Escaneás un código QR desde tu panel, igual que cuando abrís WhatsApp Web. A partir de ahí el bot manda los recordatorios usando tu propio número.",
   },
   {
     pregunta: "¿Puedo cancelar cuando quiera?",
