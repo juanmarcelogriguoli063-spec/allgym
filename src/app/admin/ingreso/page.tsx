@@ -17,6 +17,12 @@ const NIVEL_UI = {
   por_vencer: { label: "POR VENCER", icon: Clock, className: "text-primary border-primary/40 bg-primary/10" },
   vencida: { label: "CUOTA VENCIDA", icon: XCircle, className: "text-destructive border-destructive/40 bg-destructive/10" },
   pendiente: { label: "SIN CUOTA REGISTRADA", icon: Clock, className: "text-muted-foreground border-border bg-muted" },
+  // "pendiente" con una fecha de vencimiento real (lejana, más de 3 días) es
+  // un socio al día que todavía no llegó a la ventana de "por vencer" — no
+  // es lo mismo que un socio sin ninguna cuota cargada. Mostrar el mismo
+  // cartel de "SIN CUOTA REGISTRADA" ahí es contradictorio con la fecha de
+  // vencimiento que se muestra debajo.
+  pendiente_con_fecha: { label: "AL DÍA", icon: CheckCircle2, className: "text-emerald-400 border-emerald-500/40 bg-emerald-500/10" },
 };
 
 export default function IngresoPage() {
@@ -99,7 +105,10 @@ export default function IngresoPage() {
               </Card>
             ) : (
               (() => {
-                const ui = NIVEL_UI[resultado.nivel];
+                const ui =
+                  resultado.nivel === "pendiente" && resultado.diasRestantes !== null
+                    ? NIVEL_UI.pendiente_con_fecha
+                    : NIVEL_UI[resultado.nivel];
                 const Icon = ui.icon;
                 return (
                   <Card className={cn("border", ui.className)}>

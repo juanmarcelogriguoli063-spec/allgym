@@ -10,7 +10,10 @@ async function requireStaff() {
   if (!user) throw new Error("No autenticado");
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (!profile || (profile.role !== "dueno" && profile.role !== "recepcionista")) {
+  // "super_admin" hereda el acceso operativo de "dueno" (ver migracion 0012)
+  // — sin este rol en la lista, el super_admin no puede usar Control de
+  // acceso ni marcar cuotas pagadas desde /admin/ingreso.
+  if (!profile || !["dueno", "recepcionista", "super_admin"].includes(profile.role)) {
     throw new Error("No autorizado");
   }
   return { supabase, user };

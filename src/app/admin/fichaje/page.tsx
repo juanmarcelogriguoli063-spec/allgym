@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FichajeButton from "./fichaje-button";
@@ -6,10 +7,17 @@ export default async function FichajePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // El layout padre (src/app/admin/layout.tsx) ya valida la sesion, pero
+  // Next.js puede renderizar layout y page en paralelo — no esta
+  // garantizado que el redirect del layout se resuelva antes de que esta
+  // page corra, asi que no asumimos que `user` no es null aca (mismo
+  // criterio que src/app/socio/page.tsx).
+  if (!user) redirect("/login?next=/admin/fichaje");
+
   const { data: fichajes } = await supabase
     .from("fichajes")
     .select("tipo, fecha_hora")
-    .eq("profile_id", user!.id)
+    .eq("profile_id", user.id)
     .order("fecha_hora", { ascending: false })
     .limit(14);
 

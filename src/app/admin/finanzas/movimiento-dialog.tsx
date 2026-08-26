@@ -25,6 +25,7 @@ export default function MovimientoDialog() {
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(formData: FormData) {
+    if (loading) return;
     setLoading(true);
     try {
       const result = await crearMovimiento(formData);

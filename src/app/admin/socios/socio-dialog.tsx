@@ -37,6 +37,7 @@ export default function SocioDialog({ planes, socio }: { planes: Plan[]; socio?:
   const isEdit = Boolean(socio);
 
   async function handleSubmit(formData: FormData) {
+    if (loading) return;
     setLoading(true);
     try {
       const result = isEdit

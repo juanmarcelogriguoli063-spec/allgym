@@ -11,16 +11,29 @@ export default function SolicitudActions({ id }: { id: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  async function run(action: (id: string) => Promise<{ success: true } | { error: string }>, okMsg: string) {
+  async function run(
+    action: (id: string) => Promise<{ success: true; warning?: string } | { error: string }>,
+    okMsg: string
+  ) {
+    if (loading) return;
     setLoading(true);
-    const result = await action(id);
-    setLoading(false);
-    if ("error" in result) {
-      toast.error(result.error);
-      return;
+    try {
+      const result = await action(id);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      if (result.warning) {
+        toast.warning(result.warning);
+      } else {
+        toast.success(okMsg);
+      }
+      router.refresh();
+    } catch {
+      toast.error("No se pudo completar la acción. Probá de nuevo.");
+    } finally {
+      setLoading(false);
     }
-    toast.success(okMsg);
-    router.refresh();
   }
 
   return (

@@ -13,15 +13,20 @@ export default function SolicitudForm() {
   const [enviado, setEnviado] = useState(false);
 
   async function handleSubmit(formData: FormData) {
+    if (loading) return;
     setLoading(true);
-    const result = await crearSolicitud(formData);
-    setLoading(false);
-
-    if ("error" in result) {
-      toast.error(result.error);
-      return;
+    try {
+      const result = await crearSolicitud(formData);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      setEnviado(true);
+    } catch {
+      toast.error("No se pudo enviar. Probá de nuevo.");
+    } finally {
+      setLoading(false);
     }
-    setEnviado(true);
   }
 
   if (enviado) {
