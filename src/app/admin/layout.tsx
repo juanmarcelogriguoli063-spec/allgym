@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, Users, CreditCard, Wallet, ScanLine, Inbox, Clock, UsersRound, Building2 } from "lucide-react";
+import { LayoutDashboard, Users, CreditCard, Wallet, ScanLine, Inbox, Clock, UsersRound, Building2, MessageCircle } from "lucide-react";
 import LogoutButton from "@/components/logout-button";
 import GymLogo from "@/components/gym-logo";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ const GESTION = [
   { href: "/admin/socios", label: "Socios", icon: Users },
   { href: "/admin/cuotas", label: "Vencimientos", icon: CreditCard },
   { href: "/admin/finanzas", label: "Finanzas", icon: Wallet },
+  { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle },
   { href: "/admin/solicitudes", label: "Solicitudes", icon: Inbox },
   { href: "/admin/equipo", label: "Equipo", icon: UsersRound },
 ];
