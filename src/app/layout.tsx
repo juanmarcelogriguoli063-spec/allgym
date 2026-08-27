@@ -19,9 +19,11 @@ const oswald = Oswald({
   weight: ["500", "600", "700"],
 });
 
+// Fallback para rutas sin metadata propia (login, admin, socio). La home (/)
+// y /producto ya definen la suya, más específica y con OG tags.
 export const metadata: Metadata = {
-  title: "Griguoli Gym",
-  description: "Panel de gestión — Griguoli Gym",
+  title: { default: "Griguoli Gym", template: "%s — Griguoli Gym" },
+  description: "Griguoli Gym — entrená tu cuerpo, transformá tu vida.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
