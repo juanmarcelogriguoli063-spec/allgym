@@ -1,0 +1,144 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Plus, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { crearCliente, actualizarCliente } from "@/lib/actions/clientes";
+
+type Plan = { id: string; nombre: string; precio: number };
+type Cliente = {
+  id: string;
+  nombre: string;
+  dni: string | null;
+  telefono: string | null;
+  email: string | null;
+  plan_id: string | null;
+  estado: string;
+};
+
+export default function ClienteDialog({ planes, cliente }: { planes: Plan[]; cliente?: Cliente }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const isEdit = Boolean(cliente);
+
+  async function handleSubmit(formData: FormData) {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const result = isEdit
+        ? await actualizarCliente(cliente!.id, formData)
+        : await crearCliente(formData);
+
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      if (result.warning) toast.warning(result.warning);
+      else toast.success(isEdit ? "Cliente actualizado" : "Cliente creado");
+      setOpen(false);
+      router.refresh();
+    } catch {
+      toast.error("No se pudo guardar. Probá de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {isEdit ? (
+          <Button variant="outline" size="sm" className="gap-1.5">
+            <Pencil className="size-3.5" /> Editar
+          </Button>
+        ) : (
+          <Button className="gap-1.5 font-bold uppercase tracking-wide">
+            <Plus className="size-4" /> Nuevo cliente
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent>
+        <form action={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>{isEdit ? "Editar cliente" : "Nuevo cliente"}</DialogTitle>
+            <DialogDescription>
+              {isEdit ? "Actualizá los datos del cliente." : "Se crea el cliente y su primera cuota (pendiente de pago)."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="nombre">Nombre y apellido</Label>
+              <Input id="nombre" name="nombre" required defaultValue={cliente?.nombre} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-1.5">
+                <Label htmlFor="dni">DNI</Label>
+                <Input id="dni" name="dni" defaultValue={cliente?.dni ?? ""} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="telefono">Teléfono</Label>
+                <Input id="telefono" name="telefono" defaultValue={cliente?.telefono ?? ""} />
+              </div>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" name="email" type="email" defaultValue={cliente?.email ?? ""} />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="plan_id">Plan</Label>
+              <Select name="plan_id" defaultValue={cliente?.plan_id ?? undefined}>
+                <SelectTrigger id="plan_id" className="w-full">
+                  <SelectValue placeholder="Elegir plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {planes.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.nombre} — ${p.precio.toLocaleString("es-AR")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {isEdit && (
+              <div className="grid gap-1.5">
+                <Label htmlFor="estado">Estado</Label>
+                <Select name="estado" defaultValue={cliente?.estado ?? "activo"}>
+                  <SelectTrigger id="estado" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="activo">Activo</SelectItem>
+                    <SelectItem value="pausado">Pausado</SelectItem>
+                    <SelectItem value="baja">Baja</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button type="submit" disabled={loading} className="font-bold uppercase tracking-wide">
+              {loading ? "Guardando..." : "Guardar"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
