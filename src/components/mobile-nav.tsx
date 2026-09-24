@@ -2,13 +2,21 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Menu, ScanLine, Users, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import type { LucideIcon } from "lucide-react";
 
-type NavItem = { href: string; label: string; icon: LucideIcon; badge?: number };
+// Los iconos se resuelven ACA (lado cliente) a partir de un nombre simple:
+// desde un Server Component no se pueden pasar componentes/funciones como
+// props a un Client Component, solo datos serializables (strings, numeros).
+const ICONS = {
+  ingreso: ScanLine,
+  clientes: Users,
+  cuotas: CreditCard,
+} as const;
+
+type NavItem = { href: string; label: string; icon: keyof typeof ICONS; badge?: number };
 
 export default function MobileNav({ items }: { items: NavItem[] }) {
   const [open, setOpen] = useState(false);
@@ -28,7 +36,7 @@ export default function MobileNav({ items }: { items: NavItem[] }) {
         </SheetHeader>
         <nav className="flex flex-col gap-1 p-4">
           {items.map((item) => {
-            const Icon = item.icon;
+            const Icon = ICONS[item.icon];
             return (
               <Link
                 key={item.href}

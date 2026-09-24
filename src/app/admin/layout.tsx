@@ -26,15 +26,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }).length;
 
   const NAV = [
-    { href: "/admin/ingreso", label: "Ingreso", icon: ScanLine },
-    { href: "/admin/clientes", label: "Clientes", icon: Users },
-    { href: "/admin/cuotas", label: "Cuotas", icon: CreditCard, badge: alertas },
+    { href: "/admin/ingreso", label: "Ingreso", icon: ScanLine, iconName: "ingreso" as const },
+    { href: "/admin/clientes", label: "Clientes", icon: Users, iconName: "clientes" as const },
+    { href: "/admin/cuotas", label: "Cuotas", icon: CreditCard, iconName: "cuotas" as const, badge: alertas },
   ];
+
+  // Para el menu mobile (Client Component) solo se pueden pasar datos simples,
+  // no los componentes de icono: se manda el nombre y el resuelve el icono.
+  const mobileItems = NAV.map(({ href, label, iconName, badge }) => ({ href, label, icon: iconName, badge }));
 
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-40 flex items-center gap-2 border-b border-sidebar-border bg-sidebar px-4 py-3 lg:hidden">
-        <MobileNav items={NAV} />
+        <MobileNav items={mobileItems} />
         <span className="text-sm font-bold uppercase tracking-widest">
           Griguoli <span className="text-primary">Gym</span>
         </span>
