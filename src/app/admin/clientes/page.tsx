@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CuotaBadge from "@/components/cuota-badge";
 import ClienteDialog from "./cliente-dialog";
+import { UserRoundPlus } from "lucide-react";
 
 export default async function ClientesPage() {
   const supabase = await createClient();
@@ -69,8 +70,12 @@ export default async function ClientesPage() {
               ))}
               {rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
-                    Todavía no hay clientes cargados.
+                  <TableCell colSpan={7} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <UserRoundPlus className="size-10 opacity-40" />
+                      <p>Todavía no hay clientes cargados.</p>
+                      <p className="text-xs">Usá el botón &quot;Nuevo cliente&quot; para empezar.</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}

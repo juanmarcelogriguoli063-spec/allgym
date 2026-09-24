@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CreditCard } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -70,8 +71,11 @@ export default async function CuotasPage() {
               })}
               {rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
-                    Sin cuotas registradas.
+                  <TableCell colSpan={7} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <CreditCard className="size-10 opacity-40" />
+                      <p>Sin cuotas registradas.</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
