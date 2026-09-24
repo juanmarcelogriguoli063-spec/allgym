@@ -7,7 +7,16 @@ import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { marcarCuotaPagada } from "@/lib/actions/clientes";
 
-export default function MarkPaidButton({ cuotaId }: { cuotaId: string }) {
+export default function MarkPaidButton({
+  cuotaId,
+  onDone,
+  size = "sm",
+}: {
+  cuotaId: string;
+  /** Se llama despues de marcarla (ej: volver a consultar el DNI en el control de acceso). */
+  onDone?: () => void;
+  size?: "sm" | "lg";
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -20,8 +29,9 @@ export default function MarkPaidButton({ cuotaId }: { cuotaId: string }) {
         toast.error(result.error);
         return;
       }
-      toast.success("Cuota marcada como pagada — se generó la próxima");
+      toast.success("Pago registrado — se generó la próxima cuota");
       router.refresh();
+      onDone?.();
     } catch {
       toast.error("No se pudo completar. Probá de nuevo.");
     } finally {
@@ -30,9 +40,9 @@ export default function MarkPaidButton({ cuotaId }: { cuotaId: string }) {
   }
 
   return (
-    <Button size="sm" onClick={handleClick} disabled={loading} className="gap-1.5">
-      <CheckCircle2 className="size-3.5" />
-      {loading ? "Guardando..." : "Marcar pagada"}
+    <Button size={size} onClick={handleClick} disabled={loading} className="gap-1.5">
+      <CheckCircle2 className={size === "lg" ? "size-5" : "size-3.5"} />
+      {loading ? "Guardando..." : "Registrar pago"}
     </Button>
   );
 }

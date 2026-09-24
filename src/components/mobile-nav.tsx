@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 // desde un Server Component no se pueden pasar componentes/funciones como
 // props a un Client Component, solo datos serializables (strings, numeros).
 const ICONS = {
-  ingreso: ScanLine,
+  acceso: ScanLine,
   clientes: Users,
   cuotas: CreditCard,
 } as const;

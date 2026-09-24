@@ -47,7 +47,7 @@ export default function LoginForm() {
           <CardTitle className="text-2xl font-bold uppercase tracking-widest">
             Griguoli <span className="text-primary">Gym</span>
           </CardTitle>
-          <p className="text-sm text-muted-foreground">Panel de gestión</p>
+          <p className="text-sm text-muted-foreground">Sistema de gestión del gimnasio</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -75,7 +75,7 @@ export default function LoginForm() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" disabled={loading} className="mt-2 font-bold uppercase tracking-wide">
-              {loading ? "Ingresando..." : "Ingresar"}
+              {loading ? "Entrando..." : "Iniciar sesión"}
             </Button>
           </form>
         </CardContent>

@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import CamaraCaptura from "@/components/camara-captura";
 import { crearCliente, actualizarCliente } from "@/lib/actions/clientes";
 
 type Plan = { id: string; nombre: string; precio: number };
@@ -30,26 +31,39 @@ type Cliente = {
   estado: string;
 };
 
-export default function ClienteDialog({ planes, cliente }: { planes: Plan[]; cliente?: Cliente }) {
+export default function ClienteDialog({
+  planes,
+  cliente,
+  fotoUrl,
+}: {
+  planes: Plan[];
+  cliente?: Cliente;
+  fotoUrl?: string | null;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [foto, setFoto] = useState<Blob | null>(null);
   const isEdit = Boolean(cliente);
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (next) setFoto(null); // cada vez que se abre arranca sin foto nueva
+  }
 
   async function handleSubmit(formData: FormData) {
     if (loading) return;
     setLoading(true);
     try {
-      const result = isEdit
-        ? await actualizarCliente(cliente!.id, formData)
-        : await crearCliente(formData);
+      if (foto) formData.set("foto", foto, "foto.jpg");
+      const result = isEdit ? await actualizarCliente(cliente!.id, formData) : await crearCliente(formData);
 
       if ("error" in result) {
         toast.error(result.error);
         return;
       }
       if (result.warning) toast.warning(result.warning);
-      else toast.success(isEdit ? "Cliente actualizado" : "Cliente creado");
+      else toast.success(isEdit ? "Cliente actualizado" : "Cliente registrado");
       setOpen(false);
       router.refresh();
     } catch {
@@ -60,7 +74,7 @@ export default function ClienteDialog({ planes, cliente }: { planes: Plan[]; cli
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {isEdit ? (
           <Button variant="outline" size="sm" className="gap-1.5">
@@ -72,32 +86,36 @@ export default function ClienteDialog({ planes, cliente }: { planes: Plan[]; cli
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[92vh] overflow-y-auto">
         <form action={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{isEdit ? "Editar cliente" : "Nuevo cliente"}</DialogTitle>
             <DialogDescription>
-              {isEdit ? "Actualizá los datos del cliente." : "Se crea el cliente y su primera cuota (pendiente de pago)."}
+              {isEdit
+                ? "Actualizá los datos o la foto del cliente."
+                : "Sacale la foto, cargá sus datos y elegí el plan. Se crea su primera cuota, lista para cobrar."}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            <CamaraCaptura onChange={setFoto} fotoActualUrl={fotoUrl} />
+
             <div className="grid gap-1.5">
               <Label htmlFor="nombre">Nombre y apellido</Label>
               <Input id="nombre" name="nombre" required defaultValue={cliente?.nombre} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
-                <Label htmlFor="dni">DNI</Label>
-                <Input id="dni" name="dni" defaultValue={cliente?.dni ?? ""} />
+                <Label htmlFor="dni">DNI (sin puntos)</Label>
+                <Input id="dni" name="dni" inputMode="numeric" placeholder="30111222" defaultValue={cliente?.dni ?? ""} />
               </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="telefono">Teléfono</Label>
-                <Input id="telefono" name="telefono" defaultValue={cliente?.telefono ?? ""} />
+                <Input id="telefono" name="telefono" inputMode="tel" defaultValue={cliente?.telefono ?? ""} />
               </div>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email (opcional)</Label>
               <Input id="email" name="email" type="email" defaultValue={cliente?.email ?? ""} />
             </div>
             <div className="grid gap-1.5">
@@ -109,7 +127,7 @@ export default function ClienteDialog({ planes, cliente }: { planes: Plan[]; cli
                 <SelectContent>
                   {planes.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.nombre} — ${p.precio.toLocaleString("es-AR")}
+                      {p.nombre} — ${Number(p.precio).toLocaleString("es-AR")}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -117,15 +135,15 @@ export default function ClienteDialog({ planes, cliente }: { planes: Plan[]; cli
             </div>
             {isEdit && (
               <div className="grid gap-1.5">
-                <Label htmlFor="estado">Estado</Label>
+                <Label htmlFor="estado">Estado del cliente</Label>
                 <Select name="estado" defaultValue={cliente?.estado ?? "activo"}>
                   <SelectTrigger id="estado" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="activo">Activo</SelectItem>
-                    <SelectItem value="pausado">Pausado</SelectItem>
-                    <SelectItem value="baja">Baja</SelectItem>
+                    <SelectItem value="pausado">Pausado (no puede ingresar)</SelectItem>
+                    <SelectItem value="baja">Baja (no puede ingresar)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
