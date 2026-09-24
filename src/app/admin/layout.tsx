@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ScanLine, Users, CreditCard } from "lucide-react";
 import LogoutButton from "@/components/logout-button";
@@ -13,12 +12,18 @@ const NAV = [
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login?next=/admin/ingreso");
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (!profile || !["dueno", "recepcionista", "super_admin"].includes(profile.role)) {
-    redirect("/login?next=/admin/ingreso");
-  }
+  // =========================================================
+  // MODO TEST — SIN LOGIN. Pedido temporal para probar el sistema mientras
+  // la base de datos terminaba de reactivarse. Esto deja /admin abierto a
+  // cualquiera que tenga el link, sin pedir usuario ni contraseña.
+  // Para volver a pedir login: descomentar el bloque de abajo.
+  // =========================================================
+  // if (!user) redirect("/login?next=/admin/ingreso");
+  // const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  // if (!profile || !["dueno", "recepcionista", "super_admin"].includes(profile.role)) {
+  //   redirect("/login?next=/admin/ingreso");
+  // }
 
   return (
     <div className="min-h-screen bg-background">
@@ -28,6 +33,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/" className="text-sm font-bold uppercase tracking-widest">
               Griguoli <span className="text-primary">Gym</span>
             </Link>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-destructive">
+              Modo test — sin login
+            </p>
           </div>
           <nav className="flex flex-1 flex-col gap-1">
             {NAV.map((item) => {
@@ -45,7 +53,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             })}
           </nav>
           <div className="mt-6 border-t border-sidebar-border px-2 pt-4">
-            <p className="mb-2 truncate text-xs text-muted-foreground">{user.email}</p>
+            <p className="mb-2 truncate text-xs text-muted-foreground">{user?.email ?? "sin sesión (modo test)"}</p>
             <LogoutButton />
           </div>
         </aside>
